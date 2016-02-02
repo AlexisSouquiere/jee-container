@@ -11,4 +11,8 @@ public class MyServiceImpl implements MyService {
 		LOGGER.log(Level.INFO, "MyServiceImpl.doSomething()");
 	}
 
+	public void doSomethingThatThrowsException() {
+        throw new RuntimeException("error");
+    }
+
 }

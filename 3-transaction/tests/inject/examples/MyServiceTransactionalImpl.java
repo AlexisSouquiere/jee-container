@@ -19,4 +19,8 @@ public class MyServiceTransactionalImpl implements MyService {
 		entityManager.find();
 	}
 
+	public void doSomethingThatThrowsException() {
+        throw new RuntimeException("error");
+    }
+
 }
