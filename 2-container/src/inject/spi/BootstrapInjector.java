@@ -4,10 +4,13 @@ import static org.reflections.ReflectionUtils.getAllFields;
 import static org.reflections.ReflectionUtils.withAnnotation;
 
 import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import inject.api.annotations.Singleton;
 import org.reflections.Reflections;
 import org.reflections.scanners.FieldAnnotationsScanner;
 import org.reflections.util.ClasspathHelper;
@@ -21,57 +24,73 @@ public class BootstrapInjector extends AbstractInjector {
 
 	private final static Logger LOGGER = Logger.getLogger(BootstrapedInjection.class.getName());
 
-	// Proxy avec Before/After / API Proxy de Java
+	protected Map<Class<?>, Object> mapSingletons = new HashMap<Class<?>, Object>();
 
+    /**
+     * BootstrapInject constructor
+     *
+     * Scan the classpath to find every class field annotated with @Inject in order
+     * to create the mapping between the interface and the implementation
+     *
+     * @param <T>
+     */
 	public <T> BootstrapInjector() {
 		Reflections reflections = new Reflections(new ConfigurationBuilder()
 				.setUrls(ClasspathHelper.forPackage("inject")).setScanners(new FieldAnnotationsScanner()));
-		// Get all the fields annotated with @Inject in the classpath
+
+        LOGGER.log(Level.INFO,
+                "Getting all the fiels annotating with " + Inject.class.getName());
+
 		Set<Field> fieldsToInject = reflections.getFieldsAnnotatedWith(Inject.class);
 
 		for (Field fieldToInject : fieldsToInject) {
-			Class<?> klass = fieldToInject.getDeclaringClass();
-			if (map.get(klass) == null) {
-				injectDependencies(klass);
-			}
+			Class<?> iClass = fieldToInject.getType();
+            bind(iClass);
 		}
 	}
 
-	private <T> void injectDependencies(Class<?> klass) {
+    /**
+     * Get the implementation for a given interface and create the binding.
+     * Deals with multiple implementation and @Prefered annotation
+     *
+     * @param iClass - the interface
+     * @param <T>
+     */
+	private <T> void bind(Class<T> iClass) {
 		Reflections reflections = new Reflections("inject");
 
-		LOGGER.log(Level.INFO,
-				"Getting all the fiels annotating with " + Inject.class.getName() + " in " + klass.getName());
-		Set<Field> fields = getAllFields(klass, withAnnotation(Inject.class));
+        // Bind if the association has not already been done
+        if (mapInterfaceClass.get(iClass) == null
+                && mapSingletons.get(iClass) == null) {
+            // Fetch all the implementation of the interface
+            Set<Class<? extends T>> subTypes = (Set<Class<? extends T>>) reflections.getSubTypesOf(iClass);
 
-		for (Field f : fields) {
-			Class<T> iClass = (Class<T>) f.getType(); // interface
+            if (subTypes.size() == 0) {
+                throw new RuntimeException("Unable to get a subclass of type " + iClass.getName());
+            }
 
-			// Bind if the association has not already been done
-			if (map.get(iClass) == null) {
-				// Fetch all the implementation of the interface
-				Set<Class<? extends T>> subTypes = (Set<Class<? extends T>>) reflections.getSubTypesOf(iClass);
+            // Get the right implementation from all the implementations of
+            // the interface
+            Class<? extends T> subClass = null;
+            // Only one implementation
+            if (subTypes.size() == 1) {
+                subClass = (Class<? extends T>) subTypes.toArray()[0];
+            } else {
+                // More than 1 implementation : need to filter on @Prefered
+                subClass = resolveMultipleImplementations(subTypes);
+            }
 
-				if (subTypes.size() == 0) {
-					throw new RuntimeException("Unable to get a subclass of type " + iClass.getName());
-				}
-
-				// Get the right implementation from all the implementations of
-				// the interface
-				Class<? extends T> subClass = null;
-				// Only one implementation
-				if (subTypes.size() == 1) {
-					subClass = (Class<? extends T>) subTypes.toArray()[0];
-				} else {
-					// More than 1 implementation : need to filter on @Prefered
-					subClass = resolveMultipleImplementations(subTypes);
-				}
-
-				this.bind(iClass, subClass);
-			}
+            this.bind(iClass, subClass);
 		}
 	}
 
+    /**
+     * Get the implementation which has the @Prefered annotation
+     *
+     * @param subTypes - a list of implementations for an interface
+     * @param <T>
+     * @return the right subclass
+     */
 	private <T> Class<? extends T> resolveMultipleImplementations(Set<Class<? extends T>> subTypes) {
 		Class<? extends T> subClass = null;
 
@@ -89,6 +108,34 @@ public class BootstrapInjector extends AbstractInjector {
 		return subClass;
 	}
 
+    /**
+     * Create the mapping between the interface and the implementation.
+     * Deals with normal and singleton beans
+     *
+     * @param iClass - the interface
+     * @param implementation - the implementation
+     * @param <T>
+     * @return the injector
+     */
+    public <T> IInjector bind(Class<T> iClass, Class<? extends T> implementation) {
+        boolean isSingleton = implementation.isAnnotationPresent(Singleton.class);
+
+        try {
+            if (isSingleton) {
+                LOGGER.log(Level.INFO, "Creating new singleton of " + implementation.getName());
+                mapSingletons.put(iClass, implementation.newInstance());
+            } else {
+                LOGGER.log(Level.INFO, "Creating mapping for interface " + iClass.getName()
+                        + " with implementation" + implementation.getName());
+                mapInterfaceClass.put(iClass, implementation);
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Unable to bind " + iClass.getName() + " with " + implementation.getName());
+        }
+
+        return this;
+    }
+
 	@SuppressWarnings("unchecked")
 	public <T> void inject(Object instance) {
 		LOGGER.log(Level.INFO, "Getting all the fiels annotating with " + Inject.class.getName() + " in "
@@ -99,7 +146,12 @@ public class BootstrapInjector extends AbstractInjector {
 			Class<T> iClass = (Class<T>) f.getType(); // interface
 
 			try {
-				Object dependency = map.get(iClass);
+				Object dependency = null;
+
+                if(mapInterfaceClass.get(iClass) != null)
+                    dependency = mapInterfaceClass.get(iClass).newInstance();
+                else
+                    dependency = mapSingletons.get(iClass);
 
 				// Inject dependencies recursively
 				this.inject(dependency);
@@ -110,6 +162,14 @@ public class BootstrapInjector extends AbstractInjector {
 		}
 	}
 
+    /**
+     *
+     * @param instance - the class where the dependency will be injected
+     * @param f - the field corresponding to the dependency
+     * @param dependency - the dependency to inject
+     * @throws IllegalArgumentException
+     * @throws IllegalAccessException
+     */
 	protected void processInjection(Object instance, Field f, Object dependency)
 			throws IllegalArgumentException, IllegalAccessException {
 		// Process the injection

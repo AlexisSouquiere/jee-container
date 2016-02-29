@@ -8,15 +8,15 @@ import java.util.logging.Logger;
 public abstract class AbstractInjector implements IInjector {
 	private final static Logger LOGGER = Logger.getLogger(AbstractInjector.class.getName());
 
-	protected Map<Class<?>, Object> map = new HashMap<Class<?>, Object>();
+	protected Map<Class<?>, Class<?>> mapInterfaceClass = new HashMap<Class<?>, Class<?>>();
 
-	public <T> IInjector bind(Class<T> klass1, Class<? extends T> klass2) {
-		if (map.get(klass1) == null) {
+	public <T> IInjector bind(Class<T> iClass, Class<? extends T> implementation) {
+		if (mapInterfaceClass.get(iClass) == null) {
 			try {
-				LOGGER.log(Level.INFO, "Creating new instance of " + klass2.getName());
-				map.put(klass1, klass2.newInstance());
+				LOGGER.log(Level.INFO, "Creating new instance of " + implementation.getName());
+				mapInterfaceClass.put(iClass, implementation);
 			} catch (Exception e) {
-				LOGGER.log(Level.SEVERE, "Unable to bind " + klass1.getName() + " with " + klass2.getName());
+				LOGGER.log(Level.SEVERE, "Unable to bind " + iClass.getName() + " with " + implementation.getName());
 			}
 		}
 

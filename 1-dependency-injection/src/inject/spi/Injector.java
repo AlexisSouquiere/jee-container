@@ -14,12 +14,14 @@ public class Injector extends AbstractInjector {
 		Field[] fields = instance.getClass().getDeclaredFields();
 		for (Field f : fields) {
 			if (f.isAnnotationPresent(Inject.class)) {
-				Class<?> klass = f.getType();
-				Object service = map.get(klass);
+				Class<?> klass = mapInterfaceClass.get(f.getType());
 
-				LOGGER.log(Level.INFO,
-						"Injecting instance of " + klass.getName() + " in " + instance.getClass().getName());
 				try {
+					Object service = klass.newInstance();
+
+					LOGGER.log(Level.INFO,
+							"Injecting instance of " + klass.getName() + " in " + instance.getClass().getName());
+
 					f.setAccessible(true);
 					f.set(instance, service);
 				} catch (Exception e) {

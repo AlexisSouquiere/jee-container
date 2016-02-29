@@ -33,7 +33,12 @@ public class TransactionalInjection extends BootstrapInjector {
 			Class<T> iClass = (Class<T>) f.getType(); // interface
 
 			try {
-				Object dependency = map.get(iClass);
+                Object dependency = null;
+
+                if(mapInterfaceClass.get(iClass) != null)
+                    dependency = mapInterfaceClass.get(iClass).newInstance();
+                else
+                    dependency = mapSingletons.get(iClass);
 
 				// Inject dependencies recursively
 				this.inject(dependency);
