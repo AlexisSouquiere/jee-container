@@ -1,4 +1,4 @@
-package inject.examples.services;
+package inject.examples.services.nonsingleton;
 
 public interface EntityManager {
 

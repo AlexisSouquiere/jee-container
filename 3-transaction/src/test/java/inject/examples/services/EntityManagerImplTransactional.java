@@ -5,7 +5,7 @@ import java.util.logging.Logger;
 
 import inject.api.annotations.Prefered;
 import inject.api.annotations.Transactional;
-import inject.examples.services.EntityManager;
+import inject.examples.services.nonsingleton.EntityManager;
 
 @Prefered
 @Transactional

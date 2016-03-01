@@ -6,7 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import inject.api.annotations.Inject;
-import inject.examples.services.MyServiceImpl2;
+import inject.examples.services.nonsingleton.MyServiceImpl2;
 import inject.spi.InjectorFactory;
 
 public class PreferedTest {

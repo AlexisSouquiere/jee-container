@@ -6,7 +6,7 @@ import java.util.logging.Logger;
 import inject.api.annotations.Inject;
 import inject.api.annotations.Prefered;
 import inject.examples.MyService;
-import inject.examples.services.EntityManager;
+import inject.examples.services.nonsingleton.EntityManager;
 
 @Prefered
 public class MyServiceTransactionalImpl implements MyService {

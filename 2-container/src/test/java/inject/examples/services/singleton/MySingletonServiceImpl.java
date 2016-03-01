@@ -1,4 +1,4 @@
-package inject.examples.services;
+package inject.examples.services.singleton;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;

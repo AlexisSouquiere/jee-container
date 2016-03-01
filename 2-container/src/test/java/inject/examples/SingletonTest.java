@@ -6,13 +6,14 @@ import org.junit.Test;
 import org.powermock.reflect.Whitebox;
 
 import inject.api.annotations.Inject;
-import inject.examples.services.MyServiceImpl2;
+import inject.examples.services.singleton.MySingletonService;
+import inject.examples.services.singleton.MySingletonServiceImpl;
 import inject.spi.InjectorFactory;
 
 public class SingletonTest {
 	
 	@Inject
-	MyService service;
+	MySingletonService service;
 	
 	@Before
 	public void before() {
@@ -21,9 +22,9 @@ public class SingletonTest {
 	}
 
 	@Test
-	public void testInjectionWithoutSingleton() {
+	public void testSingletonInjection() {
 		// Assert
-        assertThat(Whitebox.getInternalState(MyServiceImpl2.class, "counter")).isEqualTo(2);
+        assertThat(Whitebox.getInternalState(MySingletonServiceImpl.class, "counter")).isEqualTo(1);
 	}
 
 }
