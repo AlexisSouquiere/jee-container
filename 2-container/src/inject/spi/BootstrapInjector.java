@@ -128,7 +128,7 @@ public class BootstrapInjector extends AbstractInjector {
                 LOGGER.log(Level.INFO, "Creating new singleton of " + implementation.getName());
                 Object singleton = implementation.newInstance();
                 mapSingletons.put(iClass, singleton);
-                processPostContruct(singleton);
+                processPostConstruct(singleton);
             } else {
                 LOGGER.log(Level.INFO, "Creating mapping for interface " + iClass.getName()
                         + " with implementation" + implementation.getName());
@@ -156,7 +156,7 @@ public class BootstrapInjector extends AbstractInjector {
                 if(mapInterfaceClass.get(iClass) != null) {
                     dependency = mapInterfaceClass.get(iClass).newInstance();
                     // Calling @PostConstruct methods for the dependency
-                    processPostContruct(dependency);
+                    processPostConstruct(dependency);
                 }
                 else {
                     dependency = mapSingletons.get(iClass);
@@ -196,7 +196,7 @@ public class BootstrapInjector extends AbstractInjector {
      *
      * @param instance
      */
-    protected void processPostContruct(Object instance) {
+    protected void processPostConstruct(Object instance) {
         Set<Method> methods = getAllMethods(instance.getClass(), withAnnotation(PostConstruct.class));
 
         for(Method method : methods) {

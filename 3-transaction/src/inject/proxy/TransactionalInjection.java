@@ -38,7 +38,7 @@ public class TransactionalInjection extends BootstrapInjector {
                 if(mapInterfaceClass.get(iClass) != null) {
                     dependency = mapInterfaceClass.get(iClass).newInstance();
                     // Calling @PostConstruct methods for the dependency
-                    processPostContruct(dependency);
+                    processPostConstruct(dependency);
                 }
                 else {
                     dependency = mapSingletons.get(iClass);
