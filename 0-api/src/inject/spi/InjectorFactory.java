@@ -8,11 +8,17 @@ public class InjectorFactory {
 
 	private final static Logger LOGGER = Logger.getLogger(InjectorFactory.class.getName());
 
-	public static IInjector createInjector() {
-		LOGGER.log(Level.INFO, "Loading " + IInjector.class.getName());
-		ServiceLoader<IInjector> factory = ServiceLoader.load(IInjector.class);
+	private static IInjector injector = null;
 
-		IInjector injector = factory.iterator().next();
+	public static IInjector createInjector() {
+		if(injector == null) {
+			LOGGER.log(Level.INFO, "Loading " + IInjector.class.getName());
+			ServiceLoader<IInjector> factory = ServiceLoader.load(IInjector.class);
+
+			injector = factory.iterator().next();
+		}
+
+		LOGGER.log(Level.INFO, "Injector " + injector.getClass().getName() + " successfully instantiated");
 
 		return injector;
 	}
