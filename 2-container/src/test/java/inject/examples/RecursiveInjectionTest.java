@@ -11,7 +11,7 @@ import inject.api.annotations.Inject;
 import inject.examples.services.MyServiceImpl2;
 import inject.spi.InjectorFactory;
 
-public class BootstrapedInjection {
+public class RecursiveInjectionTest {
 
 	@Inject
 	MyService service;
@@ -22,9 +22,8 @@ public class BootstrapedInjection {
 	}
 
 	@Test
-	public void test() throws Exception {
+	public void testRecursiveInjection() throws Exception {
 		assertThat(service).isNotNull();
-		assertThat(service).isInstanceOf(MyServiceImpl2.class);
 		assertThat(service).hasFieldOrProperty("entityManager");
 
 		Field field = MyServiceImpl2.class.getDeclaredField("entityManager");
