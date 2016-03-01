@@ -1,11 +1,13 @@
-package inject.examples;
+package inject.examples.services;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import inject.api.annotations.Inject;
 import inject.api.annotations.Prefered;
+import inject.examples.MyService;
 
+@Prefered
 public class MyServiceImpl2 implements MyService {
 
 	private final static Logger LOGGER = Logger.getLogger(MyServiceImpl2.class.getName());

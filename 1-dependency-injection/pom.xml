@@ -13,5 +13,12 @@
 			<artifactId>api</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
+		<dependency>
+			<groupId>fr.isima.javaee</groupId>
+			<artifactId>api</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+			<type>test-jar</type>
+      		<scope>test</scope>
+		</dependency>
 	</dependencies>
 </project>

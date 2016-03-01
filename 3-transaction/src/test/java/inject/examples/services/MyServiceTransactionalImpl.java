@@ -1,10 +1,12 @@
-package inject.examples;
+package inject.examples.services;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import inject.api.annotations.Inject;
 import inject.api.annotations.Prefered;
+import inject.examples.MyService;
+import inject.examples.services.EntityManager;
 
 @Prefered
 public class MyServiceTransactionalImpl implements MyService {

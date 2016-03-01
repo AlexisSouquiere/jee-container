@@ -1,7 +1,9 @@
-package inject.examples;
+package inject.examples.services;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import inject.examples.MyService;
 
 public class MyServiceImpl implements MyService {
 

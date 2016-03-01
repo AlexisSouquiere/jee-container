@@ -8,6 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import inject.api.annotations.Inject;
+import inject.examples.services.MyServiceImpl2;
 import inject.spi.InjectorFactory;
 
 public class BootstrapedInjection {

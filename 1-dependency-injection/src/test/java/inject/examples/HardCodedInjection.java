@@ -5,6 +5,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import inject.api.annotations.Inject;
+import inject.examples.services.MyServiceImpl;
 import inject.spi.InjectorFactory;
 
 public class HardCodedInjection {

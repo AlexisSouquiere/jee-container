@@ -1,4 +1,4 @@
-package inject.examples;
+package inject.examples.services;
 
 public interface EntityManager {
 
