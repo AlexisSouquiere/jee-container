@@ -25,7 +25,7 @@ public class TransactionalInjection extends BootstrapInjector {
 
 	@SuppressWarnings("unchecked")
 	public <T> void inject(Object instance) {
-		LOGGER.log(Level.INFO, "Getting all the fiels annotating with " + Inject.class.getName() + " in "
+		LOGGER.log(Level.INFO, "Getting all the fields annotating with " + Inject.class.getName() + " in "
 				+ instance.getClass().getName());
 		Set<Field> fields = getAllFields(instance.getClass(), withAnnotation(Inject.class));
 
@@ -35,10 +35,14 @@ public class TransactionalInjection extends BootstrapInjector {
 			try {
                 Object dependency = null;
 
-                if(mapInterfaceClass.get(iClass) != null)
+                if(mapInterfaceClass.get(iClass) != null) {
                     dependency = mapInterfaceClass.get(iClass).newInstance();
-                else
+                    // Calling @PostConstruct methods for the dependency
+                    processPostContruct(dependency);
+                }
+                else {
                     dependency = mapSingletons.get(iClass);
+                }
 
 				// Inject dependencies recursively
 				this.inject(dependency);

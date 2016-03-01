@@ -1,15 +1,18 @@
 package inject.spi;
 
 import static org.reflections.ReflectionUtils.getAllFields;
+import static org.reflections.ReflectionUtils.getAllMethods;
 import static org.reflections.ReflectionUtils.withAnnotation;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import inject.api.annotations.PostConstruct;
 import inject.api.annotations.Singleton;
 import org.reflections.Reflections;
 import org.reflections.scanners.FieldAnnotationsScanner;
@@ -39,7 +42,7 @@ public class BootstrapInjector extends AbstractInjector {
 				.setUrls(ClasspathHelper.forPackage("inject")).setScanners(new FieldAnnotationsScanner()));
 
         LOGGER.log(Level.INFO,
-                "Getting all the fiels annotating with " + Inject.class.getName());
+                "Getting all the fields annotating with " + Inject.class.getName());
 
 		Set<Field> fieldsToInject = reflections.getFieldsAnnotatedWith(Inject.class);
 
@@ -63,7 +66,7 @@ public class BootstrapInjector extends AbstractInjector {
         if (mapInterfaceClass.get(iClass) == null
                 && mapSingletons.get(iClass) == null) {
             // Fetch all the implementation of the interface
-            Set<Class<? extends T>> subTypes = (Set<Class<? extends T>>) reflections.getSubTypesOf(iClass);
+            Set<Class<? extends T>> subTypes = reflections.getSubTypesOf(iClass);
 
             if (subTypes.size() == 0) {
                 throw new RuntimeException("Unable to get a subclass of type " + iClass.getName());
@@ -123,7 +126,9 @@ public class BootstrapInjector extends AbstractInjector {
         try {
             if (isSingleton) {
                 LOGGER.log(Level.INFO, "Creating new singleton of " + implementation.getName());
-                mapSingletons.put(iClass, implementation.newInstance());
+                Object singleton = implementation.newInstance();
+                mapSingletons.put(iClass, singleton);
+                processPostContruct(singleton);
             } else {
                 LOGGER.log(Level.INFO, "Creating mapping for interface " + iClass.getName()
                         + " with implementation" + implementation.getName());
@@ -138,7 +143,7 @@ public class BootstrapInjector extends AbstractInjector {
 
 	@SuppressWarnings("unchecked")
 	public <T> void inject(Object instance) {
-		LOGGER.log(Level.INFO, "Getting all the fiels annotating with " + Inject.class.getName() + " in "
+		LOGGER.log(Level.INFO, "Getting all the fields annotating with " + Inject.class.getName() + " in "
 				+ instance.getClass().getName());
 		Set<Field> fields = getAllFields(instance.getClass(), withAnnotation(Inject.class));
 
@@ -148,10 +153,14 @@ public class BootstrapInjector extends AbstractInjector {
 			try {
 				Object dependency = null;
 
-                if(mapInterfaceClass.get(iClass) != null)
+                if(mapInterfaceClass.get(iClass) != null) {
                     dependency = mapInterfaceClass.get(iClass).newInstance();
-                else
+                    // Calling @PostConstruct methods for the dependency
+                    processPostContruct(dependency);
+                }
+                else {
                     dependency = mapSingletons.get(iClass);
+                }
 
 				// Inject dependencies recursively
 				this.inject(dependency);
@@ -163,6 +172,7 @@ public class BootstrapInjector extends AbstractInjector {
 	}
 
     /**
+     * Process the injection of the dependency into the instance
      *
      * @param instance - the class where the dependency will be injected
      * @param f - the field corresponding to the dependency
@@ -175,8 +185,28 @@ public class BootstrapInjector extends AbstractInjector {
 		// Process the injection
 		LOGGER.log(Level.INFO,
 				"Injecting " + dependency.getClass().getName() + " into " + instance.getClass().getName());
+
 		// Inject dependency into the instance
 		f.setAccessible(true);
 		f.set(instance, dependency);
 	}
+
+    /**
+     * Call all the methods annotated with @PostConstruct
+     *
+     * @param instance
+     */
+    protected void processPostContruct(Object instance) {
+        Set<Method> methods = getAllMethods(instance.getClass(), withAnnotation(PostConstruct.class));
+
+        for(Method method : methods) {
+            try {
+                method.invoke(instance);
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING,
+                        "Unable to call @PostConstruct method  " + instance.getClass().getName()
+                                + "." + method.getName() + "()");
+            }
+        }
+    }
 }
